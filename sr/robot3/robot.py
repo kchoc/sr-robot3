@@ -447,7 +447,7 @@ class Robot(metaclass=FinalMeta):
             self.power_board._run_led.flash()
         self.kch._flash_start()
 
-        while not start_button_pressed() or remote_start_pressed():
+        while not (start_button_pressed() or remote_start_pressed()):
             self.sleep(0.1)
         logger.info("Start signal received; continuing.")
         if not self._no_powerboard:

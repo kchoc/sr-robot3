@@ -27,6 +27,9 @@ from .utils import (
     IN_SIMULATOR, FinalMeta, ensure_atexit_on_term, obtain_lock, singular,
 )
 
+from .accelerometer_board import AccelerometerBoard
+from .compass_board import CompassBoard
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +54,7 @@ class Robot(metaclass=FinalMeta):
     __slots__ = (
         '_lock', '_metadata', '_power_board', '_motor_boards', '_servo_boards',
         '_arduinos', '_cameras', '_mqtt', '_astoria', '_kch', '_raw_ports',
-        '_time_server', '_no_powerboard',
+        '_time_server', '_no_powerboard', '_accelerometer_boards', '_compass_boards',
     )
 
     def __init__(
@@ -144,11 +147,15 @@ class Robot(metaclass=FinalMeta):
         manual_motorboards = manual_boards.get(MotorBoard.get_board_type(), [])
         manual_servoboards = manual_boards.get(ServoBoard.get_board_type(), [])
         manual_arduinos = manual_boards.get(Arduino.get_board_type(), [])
+        manual_accelerometers = manual_boards.get(AccelerometerBoard.get_board_type(), [])
+        manual_compasses = manual_boards.get(CompassBoard.get_board_type(), [])
 
         self._kch = KCH()
         self._motor_boards = MotorBoard._get_supported_boards(manual_motorboards)
         self._servo_boards = ServoBoard._get_supported_boards(manual_servoboards)
         self._arduinos = Arduino._get_supported_boards(manual_arduinos, ignored_arduinos)
+        self._accelerometer_boards = AccelerometerBoard._get_supported_boards(manual_accelerometers)
+        self._compass_boards = CompassBoard._get_supported_boards(manual_compasses)
         if raw_ports:
             if not IN_SIMULATOR:
                 self._raw_ports = RawSerial._get_supported_boards(raw_ports)
@@ -188,6 +195,8 @@ class Robot(metaclass=FinalMeta):
             self.arduinos.values(),
             self._cameras.values(),
             self.raw_serial_devices.values(),
+            self._accelerometer_boards.values(),
+            self._compass_boards.values(),
         )
         for board in boards:
             identity = board.identify()
@@ -347,6 +356,30 @@ class Robot(metaclass=FinalMeta):
             return self._lock.get_time()
         else:
             return time.time()
+        
+    @property
+    def accelerometer(self) -> AccelerometerBoard:
+        """
+        Access the accelerometer board connected to the robot.
+
+        This can only be used if there is exactly one accelerometer board connected.
+
+        :return: The accelerometer board object
+        :raises RuntimeError: If there is not exactly one accelerometer board connected
+        """
+        return singular(self._accelerometer_boards)
+    
+    @property
+    def compass(self) -> CompassBoard:
+        """
+        Access the compass board connected to the robot.
+
+        This can only be used if there is exactly one compass board connected.
+
+        :return: The compass board object
+        :raises RuntimeError: If there is not exactly one compass board connected
+        """
+        return singular(self._compass_boards)
 
     @property
     @log_to_debug

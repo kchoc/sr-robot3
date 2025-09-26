@@ -42,7 +42,7 @@ build-backend = "setuptools.build_meta"
 write_to = "sr/robot3/_version.py"
 
 [tool.setuptools.packages.find]
-include = ["sr.robot3", "sr.robot3.*"]
+include = ["sr", "sr.*", "sr.robot3", "sr.robot3.*"]
 
 [project]
 name = "sr-robot3"
